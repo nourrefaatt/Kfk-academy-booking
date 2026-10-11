@@ -118,7 +118,8 @@ confirmed with the owner before it is built in.
 
 - The owner is Seif and can also do everything a coach can.
 - Owner can **lock all new bookings or payments** at any time for any reason.
-- Create coach accounts.
+- **Manages all accounts freely** — coaches, clients, parents and children: create, edit
+  details, deactivate / delete, and adjust balances, expiry dates and bookings.
 - Financials, split **adults vs kids**:
   - Revenue per month and % change from last month (revenue only, no expenses/profit)
   - Pending transactions (cash payments awaiting approval)
