@@ -137,6 +137,8 @@ confirmed with the owner before it is built in.
 - Announcements
 
 ## Open questions (`TBD`)
+- When does a **drop-in** expire? (Until answered, drop-ins do not expire.)
+- Notifications are in-portal for now; **email** sending needs an email service account.
 1. Horizon font file (licensed for web). Canva Sans is only available inside Canva —
    confirm Montserrat as the web replacement.
 2. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
