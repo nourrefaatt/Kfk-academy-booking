@@ -7,7 +7,15 @@ confirmed with the owner before it is built in.
 - Business name in the app: **KFK Academy** (never "Les Rois")
 - Location / address: `TBD` (owner will provide)
 - Languages: **English and Arabic** (Arabic right-to-left)
-- Branding: logo + colour palette + inspiration board `TBD` (owner will provide)
+- Branding (from owner's visual identity, files in `assets/brand/`):
+  - Colours: white `#FFFFFF`, black `#000000`, red `#BD0000`
+  - Fonts: Montserrat, Horizon, Canva Sans
+  - Full logo: "KFK" (KF black, K red with black fighter-kick silhouette) +
+    "MUAYTHAI & MMA" in red — stacked (`logo-full-stacked.jpeg`) and horizontal
+    (`logo-full-horizontal.jpeg`) versions. Use exactly as provided.
+  - Icon mark: red K with fighter silhouette, no text — for small/square spaces
+    (app icon, favicon). Black fighter on light backgrounds, white fighter on black.
+  - Provided as JPEG with white background; transparent PNG/SVG versions `TBD`.
 - Currency: **EGP**
 - Time zone: Africa/Cairo
 - Out of scope: PT / 1-on-1, private groups, Revolt sessions
@@ -127,6 +135,7 @@ confirmed with the owner before it is built in.
 3. Client retention: how should it be measured?
 4. Profit: should the owner enter expenses, or show revenue only?
 5. Refund form: what fields/reasons? Is online money refunded through Paymob, cash by hand?
-6. Location address, logo, colour palette, inspiration board.
+6. Location address. Logo as transparent PNG or SVG. Horizon font file (licensed for web)
+   and whether Canva Sans can be replaced on the web (it is only available inside Canva).
 7. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
    email sending service.
