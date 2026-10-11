@@ -53,7 +53,7 @@ confirmed with the owner before it is built in.
 ### Packages
 | Package | Price | Weekly limit |
 |---|---|---|
-| 8 sessions | 3,500 EGP | 2 classes per week |
+| 8 sessions | 2,800 EGP | 2 classes per week |
 | Drop-in (1 session) | 500 EGP | — |
 
 ## 3. Rules shared by clients and children
