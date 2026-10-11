@@ -5,7 +5,8 @@ was given by the owner (Seif). **Do not invent values.** Anything marked `TBD` m
 confirmed with the owner before it is built in.
 
 - Business name in the app: **KFK Academy** (never "Les Rois")
-- Location / address: `TBD` (owner will provide)
+- Location: **Smash Club Les Rois** — coordinates 30.005711, 31.508550
+  (shown to clients as the place of every KFK Academy class)
 - Languages: **English and Arabic** (Arabic right-to-left)
 - Branding (from owner's visual identity, files in `assets/brand/`):
   - Colours: white `#FFFFFF`, black `#000000`, red `#BD0000`
@@ -15,7 +16,10 @@ confirmed with the owner before it is built in.
     (`logo-full-horizontal.jpeg`) versions. Use exactly as provided.
   - Icon mark: red K with fighter silhouette, no text — for small/square spaces
     (app icon, favicon). Black fighter on light backgrounds, white fighter on black.
-  - Provided as JPEG with white background; transparent PNG/SVG versions `TBD`.
+  - Originals are JPEG on white. Transparent PNGs made from them (same artwork):
+    `logo-full-stacked.png`, `logo-full-horizontal.png` (for light backgrounds),
+    `logo-full-stacked-on-dark.png`, `logo-full-horizontal-on-dark.png` (KF in white, for black
+    backgrounds), `icon-k-black-fighter.png`, `icon-k-white-fighter.png`.
 - Currency: **EGP**
 - Time zone: Africa/Cairo
 - Out of scope: PT / 1-on-1, private groups, Revolt sessions
@@ -132,8 +136,7 @@ confirmed with the owner before it is built in.
 - Announcements
 
 ## Open questions (`TBD`)
-1. Location address.
-2. Logo as transparent PNG or SVG. Horizon font file (licensed for web). Canva Sans is only
-   available inside Canva — confirm Montserrat as the web replacement.
-3. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
+1. Horizon font file (licensed for web). Canva Sans is only available inside Canva —
+   confirm Montserrat as the web replacement.
+2. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
    email sending service.
