@@ -70,11 +70,14 @@ confirmed with the owner before it is built in.
 - Drop-ins **cannot** be bought to go over the weekly limit.
 
 ### Booking
-- Each week's classes open for booking **at the start of the week** and can be booked
-  **up to the end of the class time**. Exact opening time: `TBD`.
+- Each week's classes open for booking at **Friday midnight** (start of the Saturday–Friday
+  week) and can be booked **up to the end of the class time**.
 - **Only one class per day.**
 - If a class has a capacity and is full, the person joins a **waiting list**.
-  What happens when a spot opens (auto-book vs notify): `TBD`.
+  When a spot opens, the next person on the list is **booked automatically** (one session
+  deducted) and **notified**; they can cancel afterwards under the normal cancel rules.
+  People who can no longer take the spot (no balance, weekly limit reached, already booked
+  that day) are skipped.
 - Booking deducts one session from the balance.
 - Portal shows all upcoming (not yet attended) bookings with time and place.
 
@@ -88,8 +91,7 @@ confirmed with the owner before it is built in.
 ### Payments
 - **Online** (provider: Paymob, account `TBD`) or **cash**.
 - Cash payments must be **approved by a coach** before the person can book.
-- **Refunds:** the person fills in a refund form; the coach accepts or rejects it with a
-  reason.
+- **No refunds.**
 
 ## 4. Coach portal
 
@@ -106,7 +108,7 @@ confirmed with the owner before it is built in.
   location, day, time, duration, coach, capacity (**optional per class**; no capacity =
   unlimited).
 - Add / remove classes. **Lock** a class completely (no one can see or book it).
-- Approve cash payments. Accept / reject refund requests.
+- Approve cash payments.
 
 ## 5. Owner dashboard
 
@@ -114,10 +116,11 @@ confirmed with the owner before it is built in.
 - Owner can **lock all new bookings or payments** at any time for any reason.
 - Create coach accounts.
 - Financials, split **adults vs kids**:
-  - Revenue per month and % change from last month
-  - Profit (`TBD`: needs expenses input?)
-  - Pending transactions (cash awaiting approval, refund requests)
-- Total bookings, active packages, client retention (definition `TBD`)
+  - Revenue per month and % change from last month (revenue only, no expenses/profit)
+  - Pending transactions (cash payments awaiting approval)
+- Total bookings, active packages
+- Client retention: % of people whose package ended (used up or expired) who recharged
+  **within 2 weeks**
 - Attendance rate, most popular classes, no-show rate
 - Total classes cancelled by coach per month
 
@@ -129,13 +132,8 @@ confirmed with the owner before it is built in.
 - Announcements
 
 ## Open questions (`TBD`)
-1. Exact time a week's classes open for booking (e.g. Saturday 00:00?).
-2. Waiting list: when a spot opens, auto-book the next person (and deduct a session), or
-   notify them to book?
-3. Client retention: how should it be measured?
-4. Profit: should the owner enter expenses, or show revenue only?
-5. Refund form: what fields/reasons? Is online money refunded through Paymob, cash by hand?
-6. Location address. Logo as transparent PNG or SVG. Horizon font file (licensed for web)
-   and whether Canva Sans can be replaced on the web (it is only available inside Canva).
-7. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
+1. Location address.
+2. Logo as transparent PNG or SVG. Horizon font file (licensed for web). Canva Sans is only
+   available inside Canva — confirm Montserrat as the web replacement.
+3. Accounts to create: Paymob merchant, Supabase (database + login), Vercel (hosting),
    email sending service.
