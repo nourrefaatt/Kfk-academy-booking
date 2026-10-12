@@ -820,7 +820,8 @@ language plpgsql security definer set search_path = public as $$
 begin
   if not is_owner() then raise exception 'Not allowed'; end if;
   update settings set bookings_locked = p_bookings_locked, payments_locked = p_payments_locked,
-         online_test_mode = p_online_test_mode, updated_at = now();
+         online_test_mode = p_online_test_mode, updated_at = now()
+   where id = 1;
 end $$;
 
 create or replace function save_package_price(p_code text, p_price numeric) returns void
