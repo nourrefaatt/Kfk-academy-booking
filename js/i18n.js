@@ -94,6 +94,7 @@ const dict = {
     make_coach_hint: 'To add a coach: they sign up normally, then change their role here to Coach.',
     kind_adult: 'Adult', kind_child: 'Child',
     // update 002
+    terms: 'Terms & Conditions', privacy: 'Privacy Policy', refund_policy: 'Refund Policy', contact_us: 'Contact us',
     finished_can_book: 'Finished — you can still book it for 12 hours after it ends',
     cash_note: 'Cash: book at the gym', instapay_note: 'InstaPay: account 01006833976',
     cash_expiry_note: 'Your 30 days start when the coach approves the payment.',
@@ -214,6 +215,7 @@ const dict = {
     card_slow: 'ما زال يتم تأكيد الدفع. حدّث الصفحة بعد دقيقة لترى حصصك.',
     make_coach_hint: 'لإضافة مدرب: يسجل حسابًا عاديًا ثم غيّر دوره هنا إلى مدرب.',
     kind_adult: 'بالغ', kind_child: 'طفل',
+    terms: 'الشروط والأحكام', privacy: 'سياسة الخصوصية', refund_policy: 'سياسة الاسترداد', contact_us: 'تواصل معنا',
     finished_can_book: 'انتهت — يمكنك حجزها حتى ١٢ ساعة بعد انتهائها',
     cash_note: 'كاش: احجز في الجيم', instapay_note: 'إنستاباي: حساب 01006833976',
     cash_expiry_note: 'تبدأ الـ ٣٠ يومًا من موافقة المدرب على الدفع.',

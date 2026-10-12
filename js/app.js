@@ -14,6 +14,16 @@ function langButton() {
     getLang() === 'ar' ? 'English' : 'العربية');
 }
 
+
+function siteFooter() {
+  const links = [['terms.html', t('terms')], ['privacy.html', t('privacy')], ['refund-policy.html', t('refund_policy')],
+    ['contact.html', t('contact_us')]];
+  return h('footer.site-footer',
+    h('span', 'KFK Muay Thai & MMA – Seif Khalid · '), h('a', { href: 'tel:+201006833976' }, '01006833976'), ' · ',
+    h('a', { href: 'mailto:seifkfk@gmail.com' }, 'seifkfk@gmail.com'), h('br'),
+    links.flatMap(([href, label], i) => [i ? ' · ' : '', h('a', { href }, label)]));
+}
+
 // ---------------- Auth screens ----------------
 function authScreen(mode = 'login') {
   clear(app);
@@ -22,7 +32,7 @@ function authScreen(mode = 'login') {
     h('div.auth-brand',
       h('img', { src: 'assets/brand/logo-full-stacked-on-dark.png', alt: 'KFK Muay Thai & MMA', width: 320 }),
       h('p', t('tagline'))),
-    card));
+    card, siteFooter()));
   const tabsRow = h('div.seg',
     h('button', { 'aria-pressed': mode === 'login' ? 'true' : 'false', onclick: () => authScreen('login') }, t('login')),
     h('button', { 'aria-pressed': mode === 'signup' ? 'true' : 'false', onclick: () => authScreen('signup') }, t('signup')));
@@ -139,7 +149,7 @@ async function shell() {
     h('div.who', h('strong', p.full_name || p.email), h('small', t('role_' + p.role))),
     h('div.row', bell, langButton(), h('button.btn.ghost.sm', { onclick: () => sb.auth.signOut() }, t('logout'))));
   const main = h('main.container');
-  clear(app).append(header, main);
+  clear(app).append(header, main, siteFooter());
   refreshBell(bell);
 
   if (p.role === 'client') await clientPortal(main, () => refreshBell(bell));
