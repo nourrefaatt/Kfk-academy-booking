@@ -111,11 +111,29 @@ function accountCard(p, mine, refresh) {
       } }, h('strong', p.full_name || p.email), ' ', h('small.muted', [p.email, p.phone].filter(Boolean).join(' · ')),
         mine.length ? h('span.count', mine.length) : null),
       h('div.row', roleSel,
+        h('button.btn.ghost.sm', { onclick: () => editAccount(p, mine, refresh) }, t('edit')),
         p.id === state.user.id ? null : h('button.btn.ghost.sm', { onclick: async () => {
           try { await rpc('set_account_active', { p_user: p.id, p_active: !p.active }); refresh(); } catch (e) { toastErr(e); }
         } }, p.active ? t('deactivate') : t('activate')),
         p.active ? null : h('span.pill.grey', t('inactive')))),
     details);
+}
+
+// Change an account's name / phone (and the matching adult member's name)
+export async function editAccount(p, mine, refresh) {
+  const v = await formDialog(`${t('edit')}: ${p.full_name || p.email}`, [
+    { name: 'full_name', label: t('full_name'), value: p.full_name, required: true },
+    { name: 'phone', label: t('phone'), type: 'tel', value: p.phone },
+  ]);
+  if (!v) return;
+  try {
+    await q(sb.from('profiles').update({ full_name: v.full_name, phone: v.phone || null }).eq('id', p.id));
+    const adult = (mine || []).find((m) => m.kind === 'adult');
+    if (adult) await q(sb.from('members').update({ full_name: v.full_name, phone: v.phone || null }).eq('id', adult.id));
+    if (p.id === state.user.id) Object.assign(state.profile, v);
+    toast(t('saved'));
+    if (p.id === state.user.id) location.reload(); else refresh();
+  } catch (e) { toastErr(e); }
 }
 
 async function drawMembers(box, mine, refresh) {

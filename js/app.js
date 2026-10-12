@@ -2,7 +2,7 @@ import { sb, rpc, q, state, loadBasics, unreadCount } from './api.js';
 import { t, tErr, getLang, setLang } from './i18n.js';
 import { h, clear, toast, toastErr, tabs, formFields, readForm, formDialog, ageYears, cairoDate, empty } from './ui.js';
 import { renderBook, renderBookings, renderBalance, renderProfile, renderNotifications } from './member.js';
-import { renderDay, renderClasses, renderPayments, renderExpiring, renderAnnounce, renderCancelled } from './staff.js';
+import { renderDay, renderClasses, renderPayments, renderExpiring, renderAnnounce, renderCancelled, renderMyProfile } from './staff.js';
 import { renderDashboard, renderAccounts, renderSettings } from './owner.js';
 import { renderMyMessages, renderInbox } from './messages.js';
 import { renderRules } from './rules.js';
@@ -247,7 +247,8 @@ function staffPortal(main, isOwner) {
   if (isOwner) items.push(
     { key: 'accounts', label: t('tab_accounts'), render: (b) => renderAccounts(b, () => ctl.reload()) },
     { key: 'settings', label: t('tab_settings'), render: (b) => renderSettings(b, () => ctl.reload()) });
-  items.push({ key: 'rules', label: t('tab_rules'), render: (b) => renderRules(b) });
+  items.push({ key: 'myprofile', label: t('tab_profile'), render: renderMyProfile },
+    { key: 'rules', label: t('tab_rules'), render: (b) => renderRules(b) });
   const ctl = tabs(main, items);
 }
 

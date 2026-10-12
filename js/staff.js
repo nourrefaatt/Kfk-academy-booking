@@ -240,6 +240,26 @@ export async function renderAnnounce(box) {
   } }, t('send')));
 }
 
+// ---------- My profile (coach / owner) ----------
+export async function renderMyProfile(box) {
+  const [mine] = await q(sb.from('members').select('*').eq('account_id', state.user.id).eq('kind', 'adult').limit(1));
+  const form = formFields([
+    { name: 'full_name', label: t('full_name'), value: state.profile.full_name, required: true },
+    { name: 'phone', label: t('phone'), type: 'tel', value: state.profile.phone },
+  ]);
+  box.append(h('h2', t('tab_profile')), h('p.muted', state.profile.email), form,
+    h('button.btn.primary', { onclick: async () => {
+      if (!form.reportValidity()) return;
+      const v = readForm(form);
+      try {
+        await q(sb.from('profiles').update({ full_name: v.full_name, phone: v.phone || null }).eq('id', state.user.id));
+        if (mine) await q(sb.from('members').update({ full_name: v.full_name, phone: v.phone || null }).eq('id', mine.id));
+        toast(t('profile_saved'));
+        setTimeout(() => location.reload(), 600);
+      } catch (e) { toastErr(e); }
+    } }, t('save')));
+}
+
 // ---------- Cancelled classes by month ----------
 export async function renderCancelled(box) {
   let month = cairoDate().slice(0, 7);
