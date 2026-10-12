@@ -19,7 +19,7 @@ function siteFooter() {
   const links = [['terms.html', t('terms')], ['privacy.html', t('privacy')], ['refund-policy.html', t('refund_policy')],
     ['contact.html', t('contact_us')]];
   return h('footer.site-footer',
-    h('span', 'KFK Muay Thai & MMA – Seif Khalid · '), h('a', { href: 'tel:+201006833976' }, '01006833976'), ' · ',
+    h('span', 'KFK Muay Thai & MMA – Seif Allah Khaled · '), h('a', { href: 'tel:+201006833976' }, '01006833976'), ' · ',
     h('a', { href: 'mailto:seifkfk@gmail.com' }, 'seifkfk@gmail.com'), h('br'),
     links.flatMap(([href, label], i) => [i ? ' · ' : '', h('a', { href }, label)]));
 }
