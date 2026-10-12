@@ -28,10 +28,12 @@ const audienceOf = (m) => (m.kind === 'child' ? 'kids' : 'adults');
 // ---------- Book a class ----------
 export async function renderBook(box, member, refresh) {
   const ws = weekStart(); const we = addDays(ws, 6);
+  const from = addDays(ws, -1);   // last Friday's class stays bookable for 12 hours after it ends
+  const GRACE = 12 * 3600 * 1000;
   const [sessions, counts, mine, waits] = await Promise.all([
-    q(sb.from('sessions').select('*, classes!inner(*)').gte('session_date', ws).lte('session_date', we)
+    q(sb.from('sessions').select('*, classes!inner(*)').gte('session_date', from).lte('session_date', we)
       .eq('classes.audience', audienceOf(member)).eq('classes.active', true).order('starts_at')),
-    rpc('session_counts', { p_from: ws, p_to: we }),
+    rpc('session_counts', { p_from: from, p_to: we }),
     q(sb.from('bookings').select('id, session_id, status').eq('member_id', member.id)
       .in('status', ['booked', 'attended', 'no_show', 'late_cancel'])),
     q(sb.from('waitlist').select('session_id').eq('member_id', member.id)),
@@ -45,7 +47,8 @@ export async function renderBook(box, member, refresh) {
     h('div.section-head', h('h2', t('this_week')), h('p.muted', t('week_note'))));
   if (state.settings.bookings_locked) box.append(h('p.notice', t('bookings_closed')));
 
-  const visible = sessions.filter((s) => !s.classes.locked);
+  const visible = sessions.filter((s) => !s.classes.locked
+    && (s.session_date >= ws || new Date(s.ends_at).getTime() + GRACE > Date.now()));
   if (!visible.length) { box.append(empty(t('no_classes'))); return; }
 
   let lastDay = '';
@@ -56,7 +59,8 @@ export async function renderBook(box, member, refresh) {
       list.append(h('h3.day', fmtDate(s.starts_at, { weekday: 'long', day: 'numeric', month: 'long' })));
     }
     const c = countOf[s.id] || { booked: 0, waiting: 0 };
-    const ended = new Date(s.ends_at) <= new Date();
+    const finished = new Date(s.ends_at) <= new Date();
+    const ended = new Date(s.ends_at).getTime() + GRACE <= Date.now();
     const isFull = s.capacity != null && c.booked >= s.capacity;
     let action;
     if (s.status === 'cancelled') action = h('span.pill.grey', t('cancelled'));
@@ -79,7 +83,9 @@ export async function renderBook(box, member, refresh) {
     list.append(h('article.session', { class: s.status === 'cancelled' ? 'is-cancelled' : '' },
       h('div.when', h('strong', fmtTime(s.starts_at)), h('small', `${Math.round((new Date(s.ends_at) - new Date(s.starts_at)) / 60000)}′`)),
       h('div.what', h('strong', s.classes.name), h('small', placeOf(s.classes), ' · ', spots,
-        waiting.has(s.id) ? ` · ${t('on_waitlist')}` : '')),
+        waiting.has(s.id) ? ` · ${t('on_waitlist')}` : ''),
+        finished && !ended && !booked.has(s.id) && s.status !== 'cancelled'
+          ? h('small.muted.finished', t('finished_can_book')) : null),
       h('div.act', action)));
   }
   box.append(list);
@@ -160,7 +166,7 @@ export async function renderBalance(box, member, refresh) {
   if (pending) box.append(h('p.notice', t('cash_pending')));
   if (state.settings.payments_locked) box.append(h('p.notice', t('payments_closed')));
 
-  box.append(h('h2', t('packages')));
+  box.append(h('h2', t('packages')), h('p.no-refunds-inline', t('rule_no_refunds_short')));
   const pk = state.packages.filter((p) => p.audience === audienceOf(member));
   const grid = h('div.package-grid');
   for (const p of pk) {
@@ -201,7 +207,9 @@ async function buy(member, pkg, method, refresh) {
   const label = `${document.documentElement.lang === 'ar' ? pkg.name_ar : pkg.name_en} — ${fmtMoney(pkg.price_egp)}`;
   const msg = method === 'online'
     ? `${label}\n${t('pay_online')}${state.settings.online_test_mode ? ` (${t('test_mode')})` : ''}`
-    : `${label}\n${t('pay_cash')}`;
+    : h('div', h('p', label), h('p', h('strong', t('pay_cash'))),
+        h('p.pay-note', h('em', t('cash_note'))), h('p.pay-note', h('em', t('instapay_note'))),
+        h('p.muted.small', t('cash_expiry_note')));
   if (!(await confirmBox(msg, method === 'online' ? t('pay_online') : t('pay_cash')))) return;
   try {
     const r = await rpc('purchase', { p_member: member.id, p_package: pkg.code, p_method: method });

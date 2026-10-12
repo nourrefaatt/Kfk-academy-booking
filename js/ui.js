@@ -53,13 +53,14 @@ export function modal(title, body, actions = []) {
             const v = a.value ? await a.value() : true;
             if (v !== undefined && v !== false) close(v);
           } }, a.label))) : null));
+    overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(null); });
     document.body.append(overlay);
     const first = overlay.querySelector('input,select,textarea,button.btn');
     if (first) first.focus();
   });
 }
 export function confirmBox(message, okLabel = t('confirm'), danger = false) {
-  return modal(t('confirm'), h('p', message), [
+  return modal(t('confirm'), message instanceof Node ? message : h('p', message), [
     { label: t('back'), kind: 'ghost', value: () => null },
     { label: okLabel, kind: danger ? 'danger' : 'primary', value: () => true },
   ]).then((v) => v === true);
@@ -75,6 +76,12 @@ export function formFields(fields) {
         f.options.map(([v, l]) => h('option', { value: v, selected: String(v) === String(f.value ?? '') }, l)));
     } else if (f.type === 'textarea') {
       input = h('textarea', { name: f.name, rows: 3, required: f.required }, f.value ?? '');
+    } else if (f.type === 'days') {
+      const group = h('fieldset.days', h('legend', f.label),
+        f.options.map(([v, l]) => h('label.check', h('input', { type: 'checkbox', name: `${f.name}_${v}`,
+          checked: (f.value || []).includes(v) }), h('span', l))));
+      form.append(group);
+      continue;
     } else if (f.type === 'checkbox') {
       input = h('input', { type: 'checkbox', name: f.name, checked: !!f.value });
       form.append(h('label.check', input, h('span', f.label)));

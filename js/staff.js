@@ -145,7 +145,9 @@ async function editClass(c, coaches, refresh) {
     { name: 'name', label: t('class_name'), value: c?.name, required: true },
     { name: 'audience', label: t('audience'), type: 'select', value: c?.audience || 'adults',
       options: [['adults', t('adults')], ['kids', t('kids')]] },
-    { name: 'weekday', label: t('weekday'), type: 'select', value: c?.weekday ?? 6,
+    c ? { name: 'weekday', label: t('weekday'), type: 'select', value: c.weekday,
+      options: WEEK_ORDER.map((d) => [d, t('days')[d]]) }
+      : { name: 'day', label: t('days_multi'), type: 'days', value: [],
       options: WEEK_ORDER.map((d) => [d, t('days')[d]]) },
     { name: 'start', label: t('time'), type: 'time', value: c?.start_time?.slice(0, 5), required: true },
     { name: 'duration', label: t('duration_min'), type: 'number', min: 5, value: c?.duration_min, required: true },
@@ -155,12 +157,19 @@ async function editClass(c, coaches, refresh) {
     { name: 'location', label: t('location'), value: c?.location ?? state.settings.location_name },
   ]);
   if (!v) return;
+  // New class: one separate class per selected day (each can be edited on its own later)
+  const days = c ? [Number(v.weekday)] : WEEK_ORDER.filter((d) => v[`day_${d}`]);
+  if (!days.length) { toast(t('pick_a_day'), 'err'); return; }
+  let made = 0;
   try {
-    await rpc('save_class', { p_id: c?.id || null, p_name: v.name, p_audience: v.audience,
-      p_weekday: Number(v.weekday), p_start: v.start, p_duration: Number(v.duration),
-      p_capacity: v.capacity ? Number(v.capacity) : null, p_coach: v.coach || null, p_location: v.location || null });
-    toast(t('saved')); refresh();
-  } catch (e) { toastErr(e); }
+    for (const d of days) {
+      await rpc('save_class', { p_id: c?.id || null, p_name: v.name, p_audience: v.audience,
+        p_weekday: d, p_start: v.start, p_duration: Number(v.duration),
+        p_capacity: v.capacity ? Number(v.capacity) : null, p_coach: v.coach || null, p_location: v.location || null });
+      made++;
+    }
+    toast(c ? t('saved') : t('classes_created', { n: made })); refresh();
+  } catch (e) { toastErr(e); if (made) refresh(); }
 }
 
 // ---------- Cash payments ----------
@@ -218,13 +227,15 @@ export async function renderExpiring(box) {
 // ---------- Announcements ----------
 export async function renderAnnounce(box) {
   const form = formFields([
+    { name: 'audience', label: t('send_to'), type: 'select', value: 'all',
+      options: [['all', t('aud_all')], ['clients', t('aud_clients')], ['parents', t('aud_parents')]] },
     { name: 'title', label: t('title'), required: true },
     { name: 'body', label: t('message'), type: 'textarea', required: true },
   ]);
   box.append(h('h2', t('tab_announce')), form, h('button.btn.primary', { onclick: async () => {
     if (!form.reportValidity()) return;
     const v = readForm(form);
-    try { const n = await rpc('send_announcement', { p_title: v.title, p_body: v.body }); toast(t('announce_sent', { n })); form.reset(); }
+    try { const n = await rpc('send_announcement', { p_title: v.title, p_body: v.body, p_audience: v.audience }); toast(t('announce_sent', { n })); form.reset(); }
     catch (e) { toastErr(e); }
   } }, t('send')));
 }

@@ -75,7 +75,8 @@ confirmed with the owner before it is built in.
 
 ### Booking
 - Each week's classes open for booking at **Friday midnight** (start of the Saturday–Friday
-  week) and can be booked **up to the end of the class time**.
+  week) and can be booked **up to 12 hours after the class ends** (so someone who forgot to
+  book can still add the class they attended).
 - **Only one class per day.**
 - If a class has a capacity and is full, the person joins a **waiting list**.
   When a spot opens, the next person on the list is **booked automatically** (one session
@@ -95,7 +96,9 @@ confirmed with the owner before it is built in.
 ### Payments
 - **Online** (provider: Paymob, account `TBD`) or **cash**.
 - Cash payments must be **approved by a coach** before the person can book.
-- **No refunds.**
+- **No refunds** — stated clearly in a *Rules & guidelines* page in every portal and under the packages.
+- Cash payments are labelled **Cash / InstaPay**. When chosen, the box shows *Cash: book at the gym* and
+  *InstaPay: account 01006833976*. The 30 days start when the coach **approves** the payment.
 
 ## 4. Coach portal
 
@@ -107,8 +110,10 @@ confirmed with the owner before it is built in.
   to notify them.
 - **Cancel a class**: removed from bookings, sessions refunded to balances, people notified.
   Cancelled classes are listed **per month with dates**.
-- **Announcements** to all clients and parents (email + in-portal).
-- **Classes:** weekly repeating; coach can edit timings. Fields: name, adults/kids,
+- **Announcements** to parent accounts, client accounts, or all accounts (in-portal).
+- **Private messages**: the coach picks any client/parent account and writes to it; the account can reply.
+- **Classes:** weekly repeating; coach can edit timings. When adding, the coach can pick several days —
+  one separate class is created per day, each editable on its own. Fields: name, adults/kids,
   location, day, time, duration, coach, capacity (**optional per class**; no capacity =
   unlimited).
 - Add / remove classes. **Lock** a class completely (no one can see or book it).

@@ -4,6 +4,8 @@ import { h, clear, toast, toastErr, tabs, formFields, readForm, formDialog, ageY
 import { renderBook, renderBookings, renderBalance, renderProfile, renderNotifications } from './member.js';
 import { renderDay, renderClasses, renderPayments, renderExpiring, renderAnnounce, renderCancelled } from './staff.js';
 import { renderDashboard, renderAccounts, renderSettings } from './owner.js';
+import { renderMyMessages, renderInbox } from './messages.js';
+import { renderRules } from './rules.js';
 
 const app = document.getElementById('app');
 
@@ -133,7 +135,7 @@ async function shell() {
   const bell = h('button.icon-btn.bell', { 'aria-label': t('tab_notifications'), onclick: () => openNotifications() },
     '🔔', h('span.badge.hidden'));
   const header = h('header.top',
-    h('img.logo', { src: 'assets/brand/logo-full-horizontal-on-dark.png', alt: 'KFK Muay Thai & MMA' }),
+    h('img.logo', { src: 'assets/brand/logo-full-horizontal.png', alt: 'KFK Muay Thai & MMA' }),
     h('div.who', h('strong', p.full_name || p.email), h('small', t('role_' + p.role))),
     h('div.row', bell, langButton(), h('button.btn.ghost.sm', { onclick: () => sb.auth.signOut() }, t('logout'))));
   const main = h('main.container');
@@ -166,6 +168,8 @@ function memberTabs(container, member, onChange) {
     { key: 'balance', label: t('tab_balance'), render: (b) => renderBalance(b, member, () => ctl.reload()) },
     { key: 'profile', label: t('tab_profile'), render: (b) => renderProfile(b, member, onChange) },
     { key: 'notes', label: t('tab_notifications'), render: (b) => renderNotifications(b, () => { onChange(); ctl.reload(); }) },
+    { key: 'messages', label: t('tab_messages'), render: (b) => renderMyMessages(b, onChange) },
+    { key: 'rules', label: t('tab_rules'), render: (b) => renderRules(b) },
   ]);
   return ctl;
 }
@@ -226,12 +230,14 @@ function staffPortal(main, isOwner) {
     { key: 'classes', label: t('tab_classes'), render: (b) => renderClasses(b, () => ctl.reload()) },
     { key: 'payments', label: t('tab_payments'), render: (b) => renderPayments(b, () => ctl.reload()) },
     { key: 'expiring', label: t('tab_expiring'), render: renderExpiring },
+    { key: 'messages', label: t('tab_messages'), render: renderInbox },
     { key: 'announce', label: t('tab_announce'), render: renderAnnounce },
     { key: 'cancelled', label: t('tab_cancelled'), render: renderCancelled },
   );
   if (isOwner) items.push(
     { key: 'accounts', label: t('tab_accounts'), render: (b) => renderAccounts(b, () => ctl.reload()) },
     { key: 'settings', label: t('tab_settings'), render: (b) => renderSettings(b, () => ctl.reload()) });
+  items.push({ key: 'rules', label: t('tab_rules'), render: (b) => renderRules(b) });
   const ctl = tabs(main, items);
 }
 

@@ -10,6 +10,7 @@ All rules (packages, weekly limits, 3-hour cancel rule, waiting list, expiry, ca
 |---|---|
 | `index.html`, `css/`, `js/` | The website (plain HTML/CSS/JS, no build step) |
 | `supabase/schema.sql` | Database tables, rules, permissions. Run once in Supabase |
+| `supabase/migrations/` | Updates to run after `schema.sql`, in number order (each keeps existing data) |
 | `supabase/cron.sql` | Optional hourly job for expiry reminders |
 | `tests/db/` | Tests for the booking rules (run on a local Postgres) |
 | `assets/brand/` | KFK logos and visual identity |
@@ -18,6 +19,7 @@ All rules (packages, weekly limits, 3-hour cancel rule, waiting list, expiry, ca
 
 1. **Database** — Supabase → **SQL Editor** → **New query** → paste all of `supabase/schema.sql` → **Run**.
    (Running it again later deletes all app data — only re-run before launch.)
+   Then run each file in `supabase/migrations/` in number order, the same way.
 2. **Login settings** — Supabase → **Authentication → URL Configuration**: set **Site URL** to the
    Vercel address of the site (e.g. `https://kfk-academy-booking.vercel.app`) and add the same address
    under **Redirect URLs**. This makes confirmation and password-reset emails open the site.
