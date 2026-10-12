@@ -183,7 +183,8 @@ export async function renderBalance(box, member, refresh) {
       h('div.package-actions',
         h('button.btn.primary', { disabled: !!pending || state.settings.payments_locked,
           onclick: () => buy(member, p, 'online', refresh) },
-          t('pay_online'), state.settings.online_test_mode ? h('small.tag', t('test_mode')) : null),
+          state.settings.online_test_mode ? t('pay_online') : t('pay_card'),
+          state.settings.online_test_mode ? h('small.tag', t('test_mode')) : null),
         h('button.btn.ghost', { disabled: !!pending || state.settings.payments_locked,
           onclick: () => buy(member, p, 'cash', refresh) }, t('pay_cash')))));
   }
@@ -203,14 +204,30 @@ export async function renderBalance(box, member, refresh) {
 }
 
 async function buy(member, pkg, method, refresh) {
-  if (method === 'online' && !state.settings.online_test_mode) { toast(t('online_unavailable'), 'err'); return; }
+  const realCard = method === 'online' && !state.settings.online_test_mode;   // Paymob
   const label = `${document.documentElement.lang === 'ar' ? pkg.name_ar : pkg.name_en} — ${fmtMoney(pkg.price_egp)}`;
-  const msg = method === 'online'
+  const msg = realCard
+    ? h('div', h('p', label), h('p', h('strong', t('pay_card'))), h('p.muted.small', t('card_redirect_note')),
+        h('p.no-refunds-inline', t('rule_no_refunds_short')))
+    : method === 'online'
     ? `${label}\n${t('pay_online')}${state.settings.online_test_mode ? ` (${t('test_mode')})` : ''}`
     : h('div', h('p', label), h('p', h('strong', t('pay_cash'))),
         h('p.pay-note', h('em', t('cash_note'))), h('p.pay-note', h('em', t('instapay_note'))),
         h('p.muted.small', t('cash_expiry_note')));
-  if (!(await confirmBox(msg, method === 'online' ? t('pay_online') : t('pay_cash')))) return;
+  if (!(await confirmBox(msg, realCard ? t('pay_card') : method === 'online' ? t('pay_online') : t('pay_cash')))) return;
+  if (realCard) {
+    try {
+      const { data } = await sb.auth.getSession();
+      const res = await fetch('/api/paymob-checkout', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token || ''}` },
+        body: JSON.stringify({ member_id: member.id, package_code: pkg.code }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.url) throw new Error(out.error || t('card_start_failed'));
+      toast(t('card_redirecting'));
+      location.href = out.url;
+    } catch (e) { toastErr(e); }
+    return;
+  }
   try {
     const r = await rpc('purchase', { p_member: member.id, p_package: pkg.code, p_method: method });
     toast(r.status === 'paid' ? t('paid_ok') : t('cash_pending'));

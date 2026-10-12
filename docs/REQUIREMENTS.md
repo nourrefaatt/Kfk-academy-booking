@@ -94,7 +94,8 @@ confirmed with the owner before it is built in.
   the balance as if never booked, and booked people are **notified automatically**.
 
 ### Payments
-- **Online** (provider: Paymob, account `TBD`) or **cash**.
+- **Online card** through **Paymob** (card only), or **Cash / InstaPay**. Card payments are confirmed
+  automatically by Paymob; sessions are added (and the 30 days start) at confirmation.
 - Cash payments must be **approved by a coach** before the person can book.
 - **No refunds** — stated clearly in a *Rules & guidelines* page in every portal and under the packages.
 - Cash payments are labelled **Cash / InstaPay**. When chosen, the box shows *Cash: book at the gym* and

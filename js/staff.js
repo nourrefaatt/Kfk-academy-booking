@@ -176,7 +176,7 @@ async function editClass(c, coaches, refresh) {
 export async function renderPayments(box, refresh) {
   const rows = await q(sb.from('payments').select('*, members(full_name, kind, profiles(full_name, phone)), packages(name_en, name_ar, audience)')
     .order('created_at', { ascending: false }).limit(60));
-  const pending = rows.filter((p) => p.status === 'pending');
+  const pending = rows.filter((p) => p.status === 'pending' && p.method === 'cash');
   box.append(h('h2', t('pay_pending'), ' ', h('span.count', pending.length)));
   if (!pending.length) box.append(empty(t('no_pending')));
   for (const p of pending) {

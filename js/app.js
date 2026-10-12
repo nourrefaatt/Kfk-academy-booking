@@ -241,6 +241,22 @@ function staffPortal(main, isOwner) {
   const ctl = tabs(main, items);
 }
 
+// Back from Paymob's page: wait for Paymob's confirmation, then refresh
+async function checkReturnedPayment() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('kfk_payment');
+  if (!id) return;
+  history.replaceState(null, '', location.pathname);
+  toast(t('card_checking'));
+  for (let i = 0; i < 12; i++) {
+    const { data } = await sb.from('payments').select('status, note').eq('id', id).maybeSingle();
+    if (data?.status === 'paid') { toast(t('paid_ok')); start(); return; }
+    if (data?.status === 'rejected') { toast(t('card_failed'), 'err'); return; }
+    await new Promise((r) => setTimeout(r, 2500));
+  }
+  toast(t('card_slow'));
+}
+
 // ---------------- Boot ----------------
 let recovering = false;
 async function start() {
@@ -249,7 +265,7 @@ async function start() {
   const { data } = await sb.auth.getSession();
   state.user = data.session?.user || null;
   if (!state.user) { authScreen('login'); return; }
-  try { await shell(); }
+  try { await shell(); checkReturnedPayment(); }
   catch (e) {
     console.error(e);
     clear(app).append(h('main.auth', h('div.auth-card', h('p.error', tErr(e)),
