@@ -19,6 +19,7 @@ export function renderRules(box) {
       ['rules_h_payments', ['rule_expiry', 'rule_cash', 'rule_reset', 'rule_early', 'rule_no_refunds_short']],
       ['rules_h_booking', ['rule_week', 'rule_one_day', 'rule_limit', 'rule_dropin', 'rule_after']],
       ['rules_h_cancel', ['rule_cancel', 'rule_noshow', 'rule_waitlist', 'rule_coach_cancel']],
+      ['rules_h_private', ['rule_priv_fixed', 'rule_priv_balance', 'rule_priv_charge', 'rule_priv_rules']],
     ].map(([head, items]) => h('section', h('h3', t(head)), h('ul.rules', items.map((k) => h('li', t(k))))))
   );
 }

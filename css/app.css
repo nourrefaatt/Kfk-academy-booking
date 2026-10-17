@@ -256,3 +256,10 @@ fieldset.days legend { font-weight: 600; font-size: .9rem; padding: 0 .3rem; }
 .site-footer a { text-decoration: underline; }
 .auth .site-footer { color: #bdbdbd; }
 .auth .site-footer a { color: #fff; }
+
+/* Private groups (update 005) */
+.pill.private { background: #111; color: #fff; }
+.stat.private { border-color: #111; }
+.row-card.private { border-inline-start: 4px solid #111; }
+.row-card.private > div:first-child small:last-child { margin-top: .2rem; }
+.pick-list { display: grid; gap: .35rem; max-height: 45vh; overflow-y: auto; margin-top: .6rem; padding: .2rem; }

@@ -37,6 +37,7 @@ confirmed with the owner before it is built in.
 ### Packages
 | Package | Price | Weekly limit |
 |---|---|---|
+| 8 sessions | 2,800 EGP | 4 classes per week |
 | 12 sessions | 3,500 EGP | 4 classes per week |
 | Drop-in (1 session) | 500 EGP | — |
 
@@ -100,6 +101,24 @@ confirmed with the owner before it is built in.
 - **No refunds** — stated clearly in a *Rules & guidelines* page in every portal and under the packages.
 - Cash payments are labelled **Cash / InstaPay**. When chosen, the box shows *Cash: book at the gym* and
   *InstaPay: account 01006833976*. The 30 days start when the coach **approves** the payment.
+
+### Private groups (clients and children)
+- Fixed groups: the coach creates the group and picks exactly who is in it. Only those members see and book it.
+- The coach sets the maximum size of each group; the minimum is **3**.
+- Kids' groups are separate from adults' groups.
+- Private packages (price **per person**), valid 30 days, **no weekly limit**:
+
+| Package | Price |
+|---|---|
+| Private · 8 sessions | 4,500 EGP |
+| Private · 12 sessions | 5,500 EGP |
+| Private · Drop-in (1 session) | 600 EGP |
+
+- Kids' private prices are the same as adults' (assumed — confirm).
+- Private sessions can only be used for the member's private group; regular sessions can't be used for a private group.
+- Whole-group charge: the session runs even if only 1 or 2 members book. If at least one member books, **every** member of the group is charged one private session (12 hours after the class ends), even if they didn't book or come.
+- All other rules apply (one class per day, 3-hour cancel, no-shows count, no refunds). There is no waiting list.
+- There is **no free trial session** (cancelled).
 
 ## 4. Coach portal
 

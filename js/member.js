@@ -30,13 +30,14 @@ export async function renderBook(box, member, refresh) {
   const ws = weekStart(); const we = addDays(ws, 6);
   const from = addDays(ws, -1);   // last Friday's class stays bookable for 12 hours after it ends
   const GRACE = 12 * 3600 * 1000;
-  const [sessions, counts, mine, waits] = await Promise.all([
+  const [sessions, counts, mine, waits, groupsOf] = await Promise.all([
     q(sb.from('sessions').select('*, classes!inner(*)').gte('session_date', from).lte('session_date', we)
       .eq('classes.audience', audienceOf(member)).eq('classes.active', true).order('starts_at')),
     rpc('session_counts', { p_from: from, p_to: we }),
     q(sb.from('bookings').select('id, session_id, status').eq('member_id', member.id)
       .in('status', ['booked', 'attended', 'no_show', 'late_cancel'])),
     q(sb.from('waitlist').select('session_id').eq('member_id', member.id)),
+    q(sb.from('class_members').select('class_id').eq('member_id', member.id)),
   ]);
   const bal = await rpc('member_balance', { p_member: member.id });
   const countOf = Object.fromEntries(counts.map((c) => [c.session_id, c]));
@@ -47,7 +48,8 @@ export async function renderBook(box, member, refresh) {
     h('div.section-head', h('h2', t('this_week')), h('p.muted', t('week_note'))));
   if (state.settings.bookings_locked) box.append(h('p.notice', t('bookings_closed')));
 
-  const visible = sessions.filter((s) => !s.classes.locked
+  const myGroups = new Set(groupsOf.map((g) => g.class_id));
+  const visible = sessions.filter((s) => !s.classes.locked && (!s.classes.is_private || myGroups.has(s.class_id))
     && (s.session_date >= ws || new Date(s.ends_at).getTime() + GRACE > Date.now()));
   if (!visible.length) { box.append(empty(t('no_classes'))); return; }
 
@@ -82,7 +84,8 @@ export async function renderBook(box, member, refresh) {
       : isFull ? t('full') : t('spots_left', { n: s.capacity - c.booked });
     list.append(h('article.session', { class: s.status === 'cancelled' ? 'is-cancelled' : '' },
       h('div.when', h('strong', fmtTime(s.starts_at)), h('small', `${Math.round((new Date(s.ends_at) - new Date(s.starts_at)) / 60000)}′`)),
-      h('div.what', h('strong', s.classes.name), h('small', placeOf(s.classes), ' · ', spots,
+      h('div.what', h('strong', s.classes.name, s.classes.is_private ? h('span.pill.private', t('private_group')) : null),
+        h('small', placeOf(s.classes), ' · ', s.classes.is_private ? t('your_group') : spots,
         waiting.has(s.id) ? ` · ${t('on_waitlist')}` : ''),
         finished && !ended && !booked.has(s.id) && s.status !== 'cancelled'
           ? h('small.muted.finished', t('finished_can_book')) : null),
@@ -93,12 +96,17 @@ export async function renderBook(box, member, refresh) {
 
 export function balanceStrip(bal) {
   const left = Number(bal.sessions_left || 0);
+  const priv = Number(bal.private_left || 0);
+  const showPriv = priv > 0 || bal.in_private_group;
   return h('div.stats',
     h('div.stat', h('small', t('sessions_left')), h('strong', left)),
     h('div.stat', h('small', t('expires')), h('strong', bal.next_expiry ? fmtDate(bal.next_expiry) : (left ? t('no_expiry') : '—'))),
     h('div.stat', h('small', t('this_week_used')),
       h('strong', bal.weekly_limit ? `${bal.used_this_week} / ${bal.weekly_limit}` : bal.used_this_week)),
-    left ? null : h('p.notice.full', t('no_balance')));
+    showPriv ? h('div.stat.private', h('small', t('private_left')), h('strong', priv),
+      h('small.muted', bal.private_next_expiry ? `${t('expires')}: ${fmtDate(bal.private_next_expiry)}` : '')) : null,
+    left || showPriv ? null : h('p.notice.full', t('no_balance')),
+    bal.in_private_group && !priv ? h('p.notice.full', t('no_private_balance')) : null);
 }
 
 // ---------- My bookings ----------
@@ -151,7 +159,7 @@ export async function renderBookings(box, member, refresh) {
 }
 export function statusClass(s) {
   return { booked: 'ok', attended: 'ok', cancelled: 'grey', cancelled_by_coach: 'grey',
-    late_cancel: 'warn', no_show: 'warn' }[s] || '';
+    late_cancel: 'warn', no_show: 'warn', group_charge: 'grey' }[s] || '';
 }
 
 // ---------- Balance & payments ----------
@@ -166,12 +174,15 @@ export async function renderBalance(box, member, refresh) {
   if (pending) box.append(h('p.notice', t('cash_pending')));
   if (state.settings.payments_locked) box.append(h('p.notice', t('payments_closed')));
 
-  box.append(h('h2', t('packages')), h('p.no-refunds-inline', t('rule_no_refunds_short')));
-  const pk = state.packages.filter((p) => p.audience === audienceOf(member));
+  const all = state.packages.filter((p) => p.audience === audienceOf(member));
+  for (const [title, pk, hint] of [[t('packages'), all.filter((p) => !p.is_private), null],
+    [t('private_packages'), all.filter((p) => p.is_private), t('private_packages_hint')]]) {
+  if (!pk.length) continue;
+  box.append(h('h2', title)); if (hint) box.append(h('p.muted', hint)); box.append(h('p.no-refunds-inline', t('rule_no_refunds_short')));
   const grid = h('div.package-grid');
   for (const p of pk) {
     const lang = document.documentElement.lang;
-    const hasLeft = Number(bal.sessions_left) > 0;
+    const hasLeft = Number(p.is_private ? bal.private_left : bal.sessions_left) > 0;
     grid.append(h('article.package',
       h('h3', lang === 'ar' ? p.name_ar : p.name_en),
       h('div.price', fmtMoney(p.price_egp)),
@@ -189,6 +200,7 @@ export async function renderBalance(box, member, refresh) {
           onclick: () => buy(member, p, 'cash', refresh) }, t('pay_cash')))));
   }
   box.append(grid);
+  }
 
   box.append(h('h2', t('payment_history')));
   if (!pays.length) { box.append(empty(t('no_payments'))); return; }

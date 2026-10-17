@@ -146,6 +146,7 @@ async function drawMembers(box, mine, refresh) {
       h('div', h('strong', m.full_name), ' ',
         h('small.muted', [t('kind_' + m.kind), age != null ? `${age}y` : null,
           bal ? `${t('sessions_left')}: ${bal.sessions_left}` : null,
+          bal && (Number(bal.private_left) || bal.in_private_group) ? `${t('private_left')}: ${bal.private_left}` : null,
           bal?.next_expiry ? `${t('expires')}: ${fmtDate(bal.next_expiry)}` : null].filter(Boolean).join(' · ')),
         m.kind === 'child' && age != null && age >= 13 ? h('span.pill.warn', t('turned_13')) : null,
         m.active ? null : h('span.pill.grey', t('inactive'))),
@@ -173,12 +174,13 @@ async function adjust(m, refresh) {
     { name: 'expires', label: t('new_expiry'), type: 'date' },
     { name: 'weekly', label: t('weekly_limit'), type: 'number', min: 1 },
     { name: 'note', label: t('note') },
+    { name: 'private', label: t('adjust_private'), type: 'checkbox', value: false },
   ]);
   if (!v) return;
   try {
-    await rpc('adjust_balance', { p_member: m.id, p_sessions: Number(v.sessions || 0),
+    await rpc('adjust_balance_kind', { p_member: m.id, p_sessions: Number(v.sessions || 0),
       p_expires_at: v.expires ? cairoToISO(v.expires, '23:59') : null,
-      p_weekly_limit: v.weekly ? Number(v.weekly) : null, p_note: v.note || null });
+      p_weekly_limit: v.weekly ? Number(v.weekly) : null, p_note: v.note || null, p_private: !!v.private });
     toast(t('saved')); refresh();
   } catch (e) { toastErr(e); }
 }

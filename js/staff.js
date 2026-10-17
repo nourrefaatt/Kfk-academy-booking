@@ -5,7 +5,7 @@ import { h, clear, toast, toastErr, confirmBox, formDialog, modal, formFields, r
   fmtDateTime, fmtMoney, cairoDate, cairoToISO, cairoTimeHM, ageYears, empty } from './ui.js';
 import { statusClass } from './member.js';
 
-const LIVE = ['booked', 'attended', 'no_show', 'late_cancel'];
+const LIVE = ['booked', 'attended', 'no_show', 'late_cancel', 'group_charge'];
 
 // ---------- Day ----------
 export async function renderDay(box) {
@@ -48,7 +48,8 @@ function sessionCard(s, bookings, waits, reload) {
   const cap = s.capacity == null ? '∞' : s.capacity;
   const card = h('article.card.class-card', { class: cancelled ? 'is-cancelled' : '' },
     h('header',
-      h('div', h('h3', s.classes.name, s.classes.locked ? h('span.pill.grey', t('locked')) : null),
+      h('div', h('h3', s.classes.name, s.classes.is_private ? h('span.pill.private', t('private_group')) : null,
+          s.classes.locked ? h('span.pill.grey', t('locked')) : null),
         h('small.muted', `${fmtTime(s.starts_at)}–${fmtTime(s.ends_at)} · ${t(s.classes.audience)} · `,
           `${live.length} / ${cap}`, waits.length ? ` · ${t('waitlist')}: ${waits.length}` : '')),
       cancelled ? h('span.pill.grey', t('cancelled')) : h('div.row',
@@ -67,6 +68,7 @@ function sessionCard(s, bookings, waits, reload) {
       h('div', h('strong', m.full_name),
         h('small.muted', [age != null ? `${age}y` : null, m.phone, m.medical_notes ? `⚕ ${m.medical_notes}` : null]
           .filter(Boolean).join(' · '))),
+      b.status === 'group_charge' ? h('span.pill.grey', t('status_group_charge'), b.lot_id ? null : ` · ${t('unpaid')}`) :
       b.status === 'late_cancel' ? h('span.pill.warn', t('status_late_cancel')) : h('div.row',
         h('button.btn.sm', { class: b.status === 'attended' ? 'primary' : 'ghost',
           'aria-pressed': b.status === 'attended' ? 'true' : 'false',
@@ -111,12 +113,17 @@ async function editSession(s, reload) {
 // ---------- Weekly classes ----------
 const WEEK_ORDER = [6, 0, 1, 2, 3, 4, 5]; // Saturday first
 export async function renderClasses(box, refresh) {
-  const [classes, coaches] = await Promise.all([
+  const [all, coaches, roster] = await Promise.all([
     q(sb.from('classes').select('*, profiles(full_name)').eq('active', true).order('start_time')),
     q(sb.from('profiles').select('id, full_name, role').in('role', ['coach', 'owner']).eq('active', true)),
+    q(sb.from('class_members').select('class_id, members(id, full_name)')),
   ]);
+  const classes = all.filter((c) => !c.is_private);
+  const groups = all.filter((c) => c.is_private);
   box.append(h('div.section-head', h('h2', t('weekly_classes')),
     h('button.btn.primary', { onclick: () => editClass(null, coaches, refresh) }, '+ ', t('new_class'))));
+  renderPrivateGroups(box, groups, roster, coaches, refresh);
+  box.append(h('h2', t('group_classes')));
   if (!classes.length) { box.append(empty(t('no_class_templates'))); return; }
   for (const d of WEEK_ORDER) {
     const list = classes.filter((c) => c.weekday === d);
@@ -140,7 +147,108 @@ export async function renderClasses(box, refresh) {
     }
   }
 }
+// ---------- Private groups ----------
+function renderPrivateGroups(box, groups, roster, coaches, refresh) {
+  box.append(h('div.section-head', h('h2', t('private_groups')),
+    h('button.btn.primary', { onclick: () => editGroup(null, coaches, refresh) }, '+ ', t('new_private_group'))),
+    h('p.muted', t('private_groups_hint')));
+  if (!groups.length) { box.append(empty(t('no_private_groups'))); return; }
+  for (const d of WEEK_ORDER) {
+    for (const c of groups.filter((g) => g.weekday === d)) {
+      const names = roster.filter((r) => r.class_id === c.id).map((r) => r.members?.full_name).filter(Boolean);
+      box.append(h('article.card.row-card.private',
+        h('div', h('strong', c.name, h('span.pill.private', t('private_group')), c.locked ? h('span.pill.grey', t('locked')) : null),
+          h('small.muted', `${t('days')[d]} · ${c.start_time.slice(0, 5)} · ${c.duration_min}′ · ${t(c.audience)} · `,
+            `${t('members')}: ${names.length}/${c.capacity}`, c.profiles?.full_name ? ` · ${c.profiles.full_name}` : ''),
+          h('small', names.length ? names.join(', ') : h('em.muted', t('no_members_yet')))),
+        h('div.row',
+          h('button.btn.primary.sm', { onclick: () => editMembers([c], refresh) }, t('group_members')),
+          h('button.btn.ghost.sm', { onclick: () => editGroup(c, coaches, refresh) }, t('edit')),
+          h('button.btn.ghost.sm', { onclick: async () => {
+            try { await rpc('set_class_locked', { p_id: c.id, p_locked: !c.locked }); refresh(); } catch (e) { toastErr(e); }
+          } }, c.locked ? t('unlock') : t('lock')),
+          h('button.btn.danger.sm', { onclick: async () => {
+            if (!(await confirmBox(t('remove_class_confirm'), t('remove'), true))) return;
+            try { await rpc('remove_class', { p_id: c.id }); refresh(); } catch (e) { toastErr(e); }
+          } }, t('remove')))));
+    }
+  }
+}
+
+async function editGroup(c, coaches, refresh) {
+  const v = await formDialog(c ? `${t('edit')}: ${c.name}` : t('new_private_group'), [
+    { name: 'name', label: t('group_name'), value: c?.name, required: true },
+    { name: 'audience', label: t('audience'), type: 'select', value: c?.audience || 'adults',
+      options: [['adults', t('adults')], ['kids', t('kids')]] },
+    c ? { name: 'weekday', label: t('weekday'), type: 'select', value: c.weekday,
+      options: WEEK_ORDER.map((d) => [d, t('days')[d]]) }
+      : { name: 'day', label: t('days_multi'), type: 'days', value: [], options: WEEK_ORDER.map((d) => [d, t('days')[d]]) },
+    { name: 'start', label: t('time'), type: 'time', value: c?.start_time?.slice(0, 5), required: true },
+    { name: 'duration', label: t('duration_min'), type: 'number', min: 5, value: c?.duration_min, required: true },
+    { name: 'max', label: t('group_max'), type: 'number', min: 3, value: c?.capacity ?? '', required: true, hint: t('group_max_hint') },
+    { name: 'coach', label: t('coach'), type: 'select', value: c?.coach_id || '',
+      options: [['', '—'], ...coaches.map((p) => [p.id, p.full_name || p.id.slice(0, 8)])] },
+    { name: 'location', label: t('location'), value: c?.location ?? state.settings.location_name },
+  ]);
+  if (!v) return;
+  if (Number(v.max) < 3) { toast(t('group_max_hint'), 'err'); return; }
+  const days = c ? [Number(v.weekday)] : WEEK_ORDER.filter((d) => v[`day_${d}`]);
+  if (!days.length) { toast(t('pick_a_day'), 'err'); return; }
+  const made = [];
+  try {
+    for (const d of days) {
+      const id = await rpc('save_private_group', { p_id: c?.id || null, p_name: v.name, p_audience: v.audience,
+        p_weekday: d, p_start: v.start, p_duration: Number(v.duration), p_max: Number(v.max),
+        p_coach: v.coach || null, p_location: v.location || null });
+      made.push({ id, name: v.name, audience: v.audience, capacity: Number(v.max) });
+    }
+    toast(t('saved'));
+    if (!c) await editMembers(made, refresh); else refresh();
+  } catch (e) { toastErr(e); if (made.length) refresh(); }
+}
+
+// Pick exactly who is in the group (same members applied to every class in `groups`)
+async function editMembers(groups, refresh) {
+  const g = groups[0];
+  const kind = g.audience === 'kids' ? 'child' : 'adult';
+  const [people, current] = await Promise.all([
+    q(sb.from('members').select('id, full_name, date_of_birth, profiles(full_name)').eq('kind', kind).eq('active', true).order('full_name')),
+    q(sb.from('class_members').select('member_id').eq('class_id', g.id)),
+  ]);
+  const chosen = new Set(current.map((r) => r.member_id));
+  const counter = h('strong');
+  const search = h('input', { type: 'search', placeholder: t('search'), oninput: () => draw() });
+  const list = h('div.pick-list');
+  const updateCount = () => { counter.textContent = `${chosen.size} / ${g.capacity}`; };
+  function draw() {
+    clear(list);
+    const term = search.value.toLowerCase();
+    for (const p of people) {
+      const label = kind === 'child' && p.profiles?.full_name ? `${p.full_name} (${p.profiles.full_name})` : p.full_name;
+      if (term && !label.toLowerCase().includes(term)) continue;
+      const box = h('input', { type: 'checkbox', checked: chosen.has(p.id), onchange: () => {
+        if (box.checked && chosen.size >= g.capacity) { box.checked = false; toast(t('group_full', { n: g.capacity }), 'err'); return; }
+        box.checked ? chosen.add(p.id) : chosen.delete(p.id); updateCount();
+      } });
+      list.append(h('label.check', box, h('span', label)));
+    }
+  }
+  draw(); updateCount();
+  const ok = await modal(`${t('group_members')}: ${g.name}`,
+    h('div', h('p.muted', t('group_members_hint')), h('p', t('members'), ': ', counter), search, list), [
+      { label: t('back'), kind: 'ghost', value: () => null },
+      { label: t('save'), kind: 'primary', value: () => true },
+    ]);
+  if (ok !== true) { refresh(); return; }
+  try {
+    for (const grp of groups) await rpc('set_group_members', { p_class: grp.id, p_members: [...chosen] });
+    toast(t('saved'));
+  } catch (e) { toastErr(e); }
+  refresh();
+}
+
 async function editClass(c, coaches, refresh) {
+  if (c?.is_private) return editGroup(c, coaches, refresh);
   const v = await formDialog(c ? `${t('edit')}: ${c.name}` : t('new_class'), [
     { name: 'name', label: t('class_name'), value: c?.name, required: true },
     { name: 'audience', label: t('audience'), type: 'select', value: c?.audience || 'adults',
