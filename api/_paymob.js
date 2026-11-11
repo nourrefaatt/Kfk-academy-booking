@@ -1,14 +1,16 @@
 // Shared helpers for the Paymob server functions (runs on Vercel, never in the browser).
 // Private settings come from Vercel → Settings → Environment Variables:
 //   PAYMOB_SECRET_KEY, PAYMOB_HMAC_SECRET, SUPABASE_SERVICE_ROLE_KEY   (secret — never in code)
-//   PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_ID                     (optional overrides)
+//   PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_ID (one ID or several, comma-separated)
 const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rgwurjqmacbuduxcyiib.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd3VyanFtYWNidWR1eGN5aWliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NDg0MzgsImV4cCI6MjEwNzMyNDQzOH0.g2Gc-9976ms4-8aeoYxs5ACJHCE2KC1zLlZnWnNkYKA';
 const PAYMOB_PUBLIC_KEY = process.env.PAYMOB_PUBLIC_KEY || 'egy_pk_test_WAb7ZjAtfzKZqwFmeLSwh5SbSw889wdg';
-const PAYMOB_CARD_INTEGRATION_ID = Number(process.env.PAYMOB_CARD_INTEGRATION_ID || 5979343);
+// One ID, or several separated by commas (e.g. "6033737,6033736,6033735") — Paymob's checkout then offers each.
+const PAYMOB_CARD_INTEGRATION_IDS = String(process.env.PAYMOB_CARD_INTEGRATION_ID || '5979343')
+  .split(',').map((x) => Number(x.trim())).filter((n) => Number.isInteger(n) && n > 0);
 const PAYMOB_API = process.env.PAYMOB_API || 'https://accept.paymob.com';
 
 // Call a Supabase database function. token = the person's login token, or the service key.
@@ -60,4 +62,4 @@ function siteUrl(req) {
 }
 
 module.exports = { supabaseRpc, computeHmac, validHmac, hmacString, siteUrl,
-  PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_API };
+  PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_IDS, PAYMOB_API };

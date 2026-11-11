@@ -1,7 +1,7 @@
 // POST /api/paymob-checkout  { member_id, package_code }  (header: Authorization: Bearer <login token>)
 // Creates a pending card payment (all booking rules checked in the database), then a Paymob
 // payment intention, and returns the Paymob checkout page URL.
-const { supabaseRpc, siteUrl, PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_API } = require('./_paymob');
+const { supabaseRpc, siteUrl, PAYMOB_PUBLIC_KEY, PAYMOB_CARD_INTEGRATION_IDS, PAYMOB_API } = require('./_paymob');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     const intention = {
       amount: p.amount_cents,
       currency: 'EGP',
-      payment_methods: [PAYMOB_CARD_INTEGRATION_ID],
+      payment_methods: PAYMOB_CARD_INTEGRATION_IDS,
       items: [{ name: `KFK ${p.package_name}`.slice(0, 50), amount: p.amount_cents,
         description: `${p.package_name} for ${p.member_name} (invoice #${p.invoice_no})`.slice(0, 255), quantity: 1 }],
       billing_data: {

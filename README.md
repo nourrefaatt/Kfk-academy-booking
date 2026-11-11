@@ -38,7 +38,7 @@ All rules (packages, weekly limits, 3-hour cancel rule, waiting list, expiry, ca
   pays on Paymob's page, and `api/paymob-webhook.js` confirms it only if Paymob's HMAC signature is valid.
   Vercel → Settings → Environment Variables (never put these in code or chat):
   `PAYMOB_SECRET_KEY`, `PAYMOB_HMAC_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`.
-  Optional: `PAYMOB_PUBLIC_KEY`, `PAYMOB_CARD_INTEGRATION_ID` (defaults are the test values).
+  Optional: `PAYMOB_PUBLIC_KEY`, `PAYMOB_CARD_INTEGRATION_ID` — one ID or several separated by commas (defaults are the test values).
   In Paymob, set the transaction callback URL to `https://<site>/api/paymob-webhook`.
   In the site's Settings, turn **off** "Simulated online payments" to use Paymob.
 - **Cash / InstaPay** — waits for coach approval; the 30 days start at approval.
