@@ -120,6 +120,11 @@ confirmed with the owner before it is built in.
 - All other rules apply (one class per day, 3-hour cancel, no-shows count, no refunds). There is no waiting list.
 - There is **no free trial session** (cancelled).
 
+### Packages are managed by the owner
+- The owner can add new packages, edit any package (name, sessions, price, weekly limit, valid days, drop-in, private group), hide/show them and change their order — from **Settings → Packages**.
+- Changes apply to new purchases only; sessions already bought keep their own count, weekly limit and expiry.
+- Hidden packages cannot be bought but stay in old invoices.
+
 ## 4. Coach portal
 
 - Currently one coach: **Seif**. Must support adding more coaches later.

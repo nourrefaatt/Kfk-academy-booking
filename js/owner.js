@@ -202,18 +202,70 @@ export async function renderSettings(box, refresh) {
     } catch (e) { toastErr(e); }
   } }, t('save')));
 
-  box.append(h('h2', t('prices')));
-  const all = await q(sb.from('packages').select('*').order('audience').order('sort'));
-  for (const p of all) {
-    const input = h('input', { type: 'number', min: 0, value: p.price_egp, 'aria-label': p.name_en });
-    box.append(h('div.member-row',
-      h('div', h('strong', `${t(p.audience)} · ${document.documentElement.lang === 'ar' ? p.name_ar : p.name_en}`),
-        h('small.muted', ` · ${t('sessions_n', { n: p.sessions })}`,
-          p.weekly_limit ? ` · ${t('per_week', { n: p.weekly_limit })}` : '',
-          p.validity_days ? ` · ${t('valid_days', { n: p.validity_days })}` : '')),
-      h('div.row', input, h('span', t('egp')), h('button.btn.ghost.sm', { onclick: async () => {
-        try { await rpc('save_package_price', { p_code: p.code, p_price: Number(input.value) }); toast(t('saved')); }
-        catch (e) { toastErr(e); }
-      } }, t('save')))));
+  const pkBox = h('div');
+  box.append(h('div.section-head', h('h2', t('packages')),
+    h('button.btn.primary', { onclick: () => editPackage(null, drawPackages) }, t('pkg_add'))),
+    h('p.muted', t('pkg_hint')), pkBox);
+  async function drawPackages() {
+    const all = await q(sb.from('packages').select('*').order('audience').order('sort'));
+    clear(pkBox);
+    const ar = document.documentElement.lang === 'ar';
+    for (const [title, priv] of [[t('pkg_regular_list'), false], [t('pkg_private_list'), true]]) {
+      pkBox.append(h('h3', title));
+      for (const aud of ['adults', 'kids']) {
+        const list = all.filter((p) => !!p.is_private === priv && p.audience === aud);
+        if (!list.length) continue;
+        pkBox.append(h('h4.muted', t(aud)));
+        list.forEach((p, i) => {
+          const input = h('input', { type: 'number', min: 0, value: Number(p.price_egp), 'aria-label': p.name_en });
+          const move = async (dir) => { try { await rpc('move_package', { p_code: p.code, p_dir: dir }); drawPackages(); } catch (e) { toastErr(e); } };
+          pkBox.append(h(`div.member-row${p.active ? '' : '.muted'}`,
+            h('div', h('strong', ar ? p.name_ar : p.name_en), p.active ? null : h('span.pill', t('pkg_hidden')),
+              h('br'),
+              h('small.muted', p.is_drop_in ? t('one_session') : t('sessions_n', { n: p.sessions }),
+                ' · ', p.weekly_limit ? t('per_week', { n: p.weekly_limit }) : t('no_weekly'),
+                ' · ', p.validity_days ? t('valid_days', { n: p.validity_days }) : t('no_expiry'))),
+            h('div.row',
+              input, h('span', t('egp')),
+              h('button.btn.ghost.sm', { onclick: async () => {
+                try { await rpc('save_package_price', { p_code: p.code, p_price: Number(input.value) }); toast(t('saved')); }
+                catch (e) { toastErr(e); }
+              } }, t('save')),
+              h('button.btn.ghost.sm', { onclick: () => editPackage(p, drawPackages) }, t('edit')),
+              h('button.btn.ghost.sm', { onclick: async () => {
+                try { await rpc('set_package_active', { p_code: p.code, p_active: !p.active }); drawPackages(); }
+                catch (e) { toastErr(e); }
+              } }, p.active ? t('pkg_hide') : t('pkg_show')),
+              h('button.btn.ghost.sm', { title: t('move_up'), 'aria-label': t('move_up'), disabled: i === 0, onclick: () => move(-1) }, '↑'),
+              h('button.btn.ghost.sm', { title: t('move_down'), 'aria-label': t('move_down'), disabled: i === list.length - 1, onclick: () => move(1) }, '↓'))));
+        });
+      }
+    }
   }
+  await drawPackages();
+}
+
+async function editPackage(p, done) {
+  const v = await formDialog(p ? `${t('edit')}: ${p.name_en}` : t('pkg_new'), [
+    { name: 'name_en', label: t('pkg_name_en'), value: p?.name_en, required: true },
+    { name: 'name_ar', label: t('pkg_name_ar'), value: p?.name_ar, hint: t('pkg_name_ar_hint') },
+    { name: 'audience', label: t('audience'), type: 'select', value: p?.audience || 'adults',
+      options: [['adults', t('adults')], ['kids', t('kids')]] },
+    { name: 'sessions', label: t('pkg_sessions'), type: 'number', min: 1, value: p?.sessions, required: true },
+    { name: 'price', label: t('pkg_price'), type: 'number', min: 0, value: p ? Number(p.price_egp) : '', required: true },
+    { name: 'weekly', label: t('pkg_weekly'), type: 'number', min: 1, value: p?.weekly_limit ?? '', hint: t('pkg_weekly_hint') },
+    { name: 'valid', label: t('pkg_valid'), type: 'number', min: 1, value: p?.validity_days ?? '', hint: t('pkg_valid_hint') },
+    { name: 'drop_in', label: t('pkg_dropin'), type: 'checkbox', value: p?.is_drop_in },
+    { name: 'private', label: t('pkg_private'), type: 'checkbox', value: p?.is_private },
+    { name: 'active', label: t('pkg_visible'), type: 'checkbox', value: p ? p.active : true },
+  ]);
+  if (!v) return;
+  if (v.drop_in && Number(v.sessions) !== 1) { toast(t('pkg_dropin_one'), 'err'); return; }
+  try {
+    await rpc('save_package', { p_code: p?.code || null, p_audience: v.audience, p_name_en: v.name_en,
+      p_name_ar: v.name_ar || null, p_sessions: Number(v.sessions), p_price: Number(v.price),
+      p_weekly_limit: v.weekly ? Number(v.weekly) : null, p_validity_days: v.valid ? Number(v.valid) : null,
+      p_is_drop_in: !!v.drop_in, p_is_private: !!v.private, p_active: !!v.active });
+    toast(t('saved')); done();
+  } catch (e) { toastErr(e); }
 }
