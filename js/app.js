@@ -271,6 +271,7 @@ async function checkReturnedPayment() {
 // ---------------- Boot ----------------
 let recovering = false;
 async function start() {
+  document.getElementById('static-footer')?.remove();
   setLang(getLang());
   if (recovering) { authScreen('recover'); return; }
   const { data } = await sb.auth.getSession();

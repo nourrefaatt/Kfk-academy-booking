@@ -178,7 +178,7 @@ export async function renderBalance(box, member, refresh) {
   for (const [title, pk, hint] of [[t('packages'), all.filter((p) => !p.is_private), null],
     [t('private_packages'), all.filter((p) => p.is_private), t('private_packages_hint')]]) {
   if (!pk.length) continue;
-  box.append(h('h2', title)); if (hint) box.append(h('p.muted', hint)); box.append(h('p.no-refunds-inline', t('rule_no_refunds_short')));
+  box.append(h('h2', title)); if (hint) box.append(h('p.muted', hint)); box.append(h('p.no-refunds-inline', t('rule_no_refunds_short')), policyLine());
   const grid = h('div.package-grid');
   for (const p of pk) {
     const lang = document.documentElement.lang;
@@ -294,4 +294,12 @@ export async function renderNotifications(box, onRead) {
   box.append(h('div.notes', rows.map((n) => h('article.note', { class: n.read_at ? '' : 'unread' },
     h('div', h('strong', n.title), h('small.muted', fmtDateTime(n.created_at))),
     n.body ? h('p', n.body) : null))));
+}
+
+// "By paying you agree to…" with links to the policy pages, shown next to the payment buttons
+function policyLine() {
+  return h('p.small.muted.policy-line', t('pay_agree'), ' ',
+    h('a', { href: 'terms.html', target: '_blank' }, t('terms')), ' · ',
+    h('a', { href: 'refund-policy.html', target: '_blank' }, t('refund_policy')), ' · ',
+    h('a', { href: 'privacy.html', target: '_blank' }, t('privacy')));
 }
