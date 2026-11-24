@@ -37,6 +37,12 @@ function mockRes() { const r = { code: 0, out: null }; r.status = (c) => { r.cod
   console.log('hmac in body ->', res.code, res.out);
   res = mockRes(); await webhook({ method: 'POST', query: {}, body: { type: 'TRANSACTION', obj, hmac: 'deadbeef' } }, res);
   console.log('bad hmac in body ->', res.code, res.out);
+  res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac(obj, 'HMACSECRET') }, body: JSON.stringify({ type: 'TRANSACTION', obj }) }, res);
+  console.log('json string body ->', res.code, res.out);
+  res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac(obj, 'HMACSECRET') }, body: Buffer.from(JSON.stringify({ type: 'TRANSACTION', obj })) }, res);
+  console.log('buffer body ->', res.code, res.out);
+  res = mockRes(); await webhook({ method: 'POST', query: {}, body: { ...obj, hmac: computeHmac(obj, 'HMACSECRET') } }, res);
+  console.log('flat transaction body ->', res.code, res.out);
   res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac({ ...obj, pending: true }, 'HMACSECRET') }, body: { type: 'TRANSACTION', obj: { ...obj, pending: true } } }, res);
   console.log('pending ->', res.out);
   delete process.env.PAYMOB_SECRET_KEY; res = mockRes();
