@@ -33,6 +33,10 @@ function mockRes() { const r = { code: 0, out: null }; r.status = (c) => { r.cod
   res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac(obj, 'HMACSECRET') }, body: { type: 'TRANSACTION', obj } }, res);
   const conf = calls.find((c) => c.url.endsWith('confirm_online_payment'));
   console.log('good hmac ->', res.code, res.out, 'confirm args', conf.body, 'auth service', conf.auth === 'Bearer service-key');
+  res = mockRes(); await webhook({ method: 'POST', query: {}, body: { type: 'TRANSACTION', obj, hmac: computeHmac(obj, 'HMACSECRET') } }, res);
+  console.log('hmac in body ->', res.code, res.out);
+  res = mockRes(); await webhook({ method: 'POST', query: {}, body: { type: 'TRANSACTION', obj, hmac: 'deadbeef' } }, res);
+  console.log('bad hmac in body ->', res.code, res.out);
   res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac({ ...obj, pending: true }, 'HMACSECRET') }, body: { type: 'TRANSACTION', obj: { ...obj, pending: true } } }, res);
   console.log('pending ->', res.out);
   delete process.env.PAYMOB_SECRET_KEY; res = mockRes();
