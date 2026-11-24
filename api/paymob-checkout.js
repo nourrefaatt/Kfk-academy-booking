@@ -36,6 +36,9 @@ module.exports = async function handler(req, res) {
       notification_url: `${base}/api/paymob-webhook`,
       redirection_url: `${base}/?kfk_payment=${p.payment_id}`,
     };
+    // PAYMOB_USE_INTEGRATION_CALLBACK=1 → don't send our own notification_url, so Paymob uses the
+    // Webhook URL saved on the integration in the dashboard (needed for the Integration Wizard's callback check).
+    if (process.env.PAYMOB_USE_INTEGRATION_CALLBACK === '1') delete intention.notification_url;
     const r = await fetch(`${PAYMOB_API}/v1/intention/`, {
       method: 'POST',
       headers: { Authorization: `Token ${process.env.PAYMOB_SECRET_KEY}`, 'Content-Type': 'application/json' },
