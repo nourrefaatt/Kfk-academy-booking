@@ -43,6 +43,16 @@ function mockRes() { const r = { code: 0, out: null }; r.status = (c) => { r.cod
   console.log('buffer body ->', res.code, res.out);
   res = mockRes(); await webhook({ method: 'POST', query: {}, body: { ...obj, hmac: computeHmac(obj, 'HMACSECRET') } }, res);
   console.log('flat transaction body ->', res.code, res.out);
+  { const q = { id: String(obj.id), amount_cents: String(obj.amount_cents), created_at: obj.created_at, currency: obj.currency,
+      error_occured: String(obj.error_occured), has_parent_transaction: String(obj.has_parent_transaction), integration_id: String(obj.integration_id),
+      is_3d_secure: String(obj.is_3d_secure), is_auth: String(obj.is_auth), is_capture: String(obj.is_capture), is_refunded: String(obj.is_refunded),
+      is_standalone_payment: String(obj.is_standalone_payment), is_voided: String(obj.is_voided), order: String(obj.order.id),
+      merchant_order_id: obj.order.merchant_order_id, owner: String(obj.owner), pending: String(obj.pending),
+      'source_data.pan': obj.source_data.pan, 'source_data.sub_type': obj.source_data.sub_type, 'source_data.type': obj.source_data.type,
+      success: String(obj.success) };
+    q.hmac = computeHmac(obj, 'HMACSECRET');
+    res = mockRes(); await webhook({ method: 'POST', query: q, body: {} }, res);
+    console.log('transaction in query ->', res.code, res.out); }
   res = mockRes(); await webhook({ method: 'POST', query: { hmac: computeHmac({ ...obj, pending: true }, 'HMACSECRET') }, body: { type: 'TRANSACTION', obj: { ...obj, pending: true } } }, res);
   console.log('pending ->', res.out);
   delete process.env.PAYMOB_SECRET_KEY; res = mockRes();

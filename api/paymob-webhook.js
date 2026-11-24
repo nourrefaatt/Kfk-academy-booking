@@ -10,8 +10,9 @@ module.exports = async function handler(req, res) {
   const body = parseBody(req.body);
   if (body.type && body.type !== 'TRANSACTION') { res.status(200).json({ ignored: body.type }); return; }
   // Normally { type, obj: {...transaction} }; some senders post the transaction itself.
+  // Some senders put the transaction in the link instead (flat keys like id, amount_cents, order, source_data.pan).
   const obj = (body.obj && typeof body.obj === 'object') ? body.obj
-    : (body.id != null && body.amount_cents != null ? body : {});
+    : (body.id != null && body.amount_cents != null ? body : fromQuery(req.query || {}));
 
   // Paymob normally puts the signature in the link (?hmac=…); some relays (e.g. the Integration Wizard) send it in the body.
   const received = (req.query && req.query.hmac) || body.hmac;
@@ -21,6 +22,7 @@ module.exports = async function handler(req, res) {
       from: req.query && req.query.hmac ? 'query' : (body.hmac ? 'body' : 'none'),
       contentType: req.headers && req.headers['content-type'],
       bodyKeys: Object.keys(body).slice(0, 20),
+      queryKeys: Object.keys(req.query || {}).slice(0, 40),
       secretLength: String(process.env.PAYMOB_HMAC_SECRET || '').trim().length,
       signed: hmacString(obj),
     });
@@ -60,4 +62,23 @@ function parseBody(raw) {
     if (typeof out.obj === 'string') { try { out.obj = JSON.parse(out.obj); } catch (_) { /* keep */ } }
     return out;
   } catch (_) { return {}; }
+}
+
+// Rebuild a transaction object from flat query fields (Paymob's "response callback" style).
+function fromQuery(q) {
+  if (q.id == null || q.amount_cents == null) return {};
+  const obj = {};
+  for (const [k, v] of Object.entries(q)) {
+    if (k === 'hmac') continue;
+    if (k === 'order') { obj.order = { ...(obj.order || {}), id: v }; continue; }
+    if (k === 'merchant_order_id') { obj.order = { ...(obj.order || {}), merchant_order_id: v }; continue; }
+    const parts = k.split('.');
+    let o = obj;
+    parts.slice(0, -1).forEach((p) => { o[p] = (o[p] && typeof o[p] === 'object') ? o[p] : {}; o = o[p]; });
+    o[parts[parts.length - 1]] = v;
+  }
+  for (const k of ['success', 'pending', 'is_voided', 'is_refunded']) {
+    if (obj[k] === 'true') obj[k] = true; else if (obj[k] === 'false') obj[k] = false;
+  }
+  return obj;
 }
