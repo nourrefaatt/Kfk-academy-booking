@@ -21,6 +21,9 @@ module.exports = async function handler(req, res) {
     console.error('Paymob webhook: bad HMAC for transaction', obj.id, {
       from: req.query && req.query.hmac ? 'query' : (body.hmac ? 'body' : 'none'),
       contentType: req.headers && req.headers['content-type'],
+      contentLength: req.headers && req.headers['content-length'],
+      contentEncoding: req.headers && req.headers['content-encoding'],
+      rawBodyType: req.body === undefined ? 'undefined' : (Buffer.isBuffer(req.body) ? 'buffer' : typeof req.body),
       bodyKeys: Object.keys(body).slice(0, 20),
       queryKeys: Object.keys(req.query || {}).slice(0, 40),
       secretLength: String(process.env.PAYMOB_HMAC_SECRET || '').trim().length,
@@ -51,7 +54,13 @@ module.exports = async function handler(req, res) {
 // Accept a JSON object, a JSON string, a raw buffer, or form-encoded text.
 function parseBody(raw) {
   if (raw == null) return {};
-  if (Buffer.isBuffer(raw)) raw = raw.toString('utf8');
+  if (Buffer.isBuffer(raw)) {
+    // gzip-compressed body (starts with 0x1f 0x8b)
+    if (raw.length > 2 && raw[0] === 0x1f && raw[1] === 0x8b) {
+      try { raw = require('zlib').gunzipSync(raw); } catch (_) { /* leave as is */ }
+    }
+    raw = raw.toString('utf8');
+  }
   if (typeof raw === 'object') return raw;
   const text = String(raw).trim();
   if (!text) return {};
