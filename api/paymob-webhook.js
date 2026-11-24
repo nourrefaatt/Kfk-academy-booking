@@ -1,7 +1,7 @@
 // POST /api/paymob-webhook?hmac=...   (or hmac in the JSON body)   Paymob's "transaction processed" callback.
 // The HMAC signature proves the message really comes from Paymob. Only then the payment is
 // confirmed in the database (with the private service key) and the sessions are added.
-const { supabaseRpc, validHmac } = require('./_paymob');
+const { supabaseRpc, validHmac, hmacString } = require('./_paymob');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -14,7 +14,12 @@ module.exports = async function handler(req, res) {
   // Paymob normally puts the signature in the link (?hmac=…); some relays (e.g. the Integration Wizard) send it in the body.
   const received = (req.query && req.query.hmac) || body.hmac;
   if (!validHmac(obj, received, process.env.PAYMOB_HMAC_SECRET)) {
-    console.error('Paymob webhook: bad HMAC for transaction', obj.id);
+    // Diagnostics only (no secrets): where the signature came from and what was signed.
+    console.error('Paymob webhook: bad HMAC for transaction', obj.id, {
+      from: req.query && req.query.hmac ? 'query' : (body.hmac ? 'body' : 'none'),
+      secretLength: String(process.env.PAYMOB_HMAC_SECRET || '').trim().length,
+      signed: hmacString(obj),
+    });
     res.status(401).json({ error: 'Invalid signature' });
     return;
   }

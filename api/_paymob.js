@@ -49,6 +49,7 @@ function computeHmac(obj, secret) {
   return crypto.createHmac('sha512', secret).update(hmacString(obj)).digest('hex');
 }
 function validHmac(obj, received, secret) {
+  secret = String(secret || '').trim();   // a pasted key can carry a stray space or new line
   if (!received || !secret) return false;
   const a = Buffer.from(computeHmac(obj, secret), 'hex');
   const b = Buffer.from(String(received).toLowerCase(), 'hex');
